@@ -1,0 +1,17 @@
+node_modules
+dist
+.DS_Store
+*.local
+.netlify
+
+# Environment files can contain server-side Appwrite keys.
+.env
+.env.*
+!.env.example
+
+# Common private-key and certificate containers.
+*.pem
+*.key
+*.p12
+*.pfx
+*.tsbuildinfo

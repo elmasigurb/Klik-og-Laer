@@ -1,0 +1,32 @@
+{
+  "name": "klik-og-laer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc -b --pretty false",
+    "test:authorization": "node --test appwrite/functions/content-manager/test/*.test.mjs",
+    "audit:appwrite": "node --env-file=.env.local scripts/audit-appwrite.mjs",
+    "setup:appwrite": "node --env-file=.env.local scripts/setup-appwrite.mjs",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.14",
+    "appwrite": "^29.1.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-router-dom": "^7.9.3",
+    "tailwindcss": "^4.1.14"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.16",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.4",
+    "node-appwrite": "^30.0.1",
+    "typescript": "~5.9.3",
+    "vite": "^7.1.9"
+  }
+}
