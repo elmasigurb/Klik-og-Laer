@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Models } from 'appwrite'
+import { DEFAULT_CATEGORY_ICON, isCategoryIconName, type CategoryIconName } from '../../components/ui/Icons'
 import type { Category, Exercise, ExerciseStatus } from '../../types'
 import { appwriteConfig, storage } from '../../lib/appwrite'
 import { useAuth } from '../auth/AuthContext'
@@ -7,7 +8,7 @@ import { exerciseFileRepository } from '../exercises/exerciseFileRepository'
 import { appwriteCatalogRepository } from './appwriteCatalogRepository'
 import { localCatalogRepository, slugify } from './catalogRepository'
 
-type CategoryDraft = Pick<Category, 'name' | 'description' | 'tone' | 'isPublished'> & Partial<Pick<Category, 'eyebrow' | 'icon' | 'displayOrder'>>
+type CategoryDraft = Pick<Category, 'name' | 'description' | 'tone' | 'isPublished'> & Partial<Pick<Category, 'eyebrow' | 'displayOrder'>> & { icon?: CategoryIconName }
 type ExerciseDraft = Omit<Exercise, 'createdAt' | 'updatedAt'> & Partial<Pick<Exercise, 'createdAt' | 'updatedAt'>>
 type RepositoryMode = 'local' | 'appwrite'
 
@@ -68,8 +69,9 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   useEffect(() => { void load() }, [load])
 
   const createCategory = useCallback(async (draft: CategoryDraft) => {
+    if (draft.icon && !isCategoryIconName(draft.icon)) throw new Error('Vælg et ikon fra listen.')
     const now = new Date().toISOString()
-    const category: Category = { id: crypto.randomUUID(), slug: `${slugify(draft.name)}-${Date.now().toString().slice(-4)}`, eyebrow: draft.eyebrow ?? 'Nyt læringsområde', icon: draft.icon ?? 'sparkles', displayOrder: draft.displayOrder ?? categories.length, ...draft, createdAt: now, updatedAt: now }
+    const category: Category = { id: crypto.randomUUID(), slug: `${slugify(draft.name)}-${Date.now().toString().slice(-4)}`, eyebrow: draft.eyebrow ?? 'Nyt læringsområde', icon: draft.icon ?? DEFAULT_CATEGORY_ICON, displayOrder: draft.displayOrder ?? categories.length, ...draft, createdAt: now, updatedAt: now }
     if (repositoryMode === 'appwrite') {
       const saved = await appwriteCatalogRepository.createCategory(category)
       setCategories((current) => [...current, saved].sort((a, b) => a.displayOrder - b.displayOrder))
@@ -84,6 +86,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const updateCategory = useCallback(async (id: string, changes: Partial<Category>) => {
     const current = categories.find((item) => item.id === id)
     if (!current) return
+    if (changes.icon && changes.icon !== current.icon && !isCategoryIconName(changes.icon)) throw new Error('Vælg et ikon fra listen.')
     const nextItem = { ...current, ...changes, updatedAt: new Date().toISOString() }
     if (repositoryMode === 'appwrite') await appwriteCatalogRepository.updateCategory(nextItem)
     const next = categories.map((item) => item.id === id ? nextItem : item)
