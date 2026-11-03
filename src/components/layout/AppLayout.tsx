@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Menu, X } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useContent } from '../../features/content/ContentContext'
+import { appwriteConfig } from '../../lib/appwrite'
 
 export function AppLayout() {
   const [open, setOpen] = useState(false)
@@ -9,7 +10,7 @@ export function AppLayout() {
   const copy = content.navigation
   const navItems = [
     { to: '/', label: copy.homeLabel, end: true },
-    { to: '/exercises', label: copy.exercisesLabel },
+    { to: appwriteConfig.features.publicClassNavigation ? '/classes' : '/exercises', label: appwriteConfig.features.publicClassNavigation ? 'Klasser' : copy.exercisesLabel },
   ]
   const navClass = ({ isActive }: { isActive: boolean }) => `rounded-full px-4 py-2 text-sm font-semibold transition-colors ${isActive ? 'bg-forest-900 text-white' : 'text-ink hover:bg-white/70'}`
 

@@ -53,6 +53,22 @@ export interface AppwriteExerciseRow {
   fileSize?: number
 }
 
+export interface AppwriteClassRow {
+  name: string
+  normalizedName: string
+  activeNameKey: string
+  teacherId: string
+  displayOrder: number
+  status: 'active' | 'archived'
+}
+
+export interface AppwriteExerciseClassRow {
+  exerciseId: string
+  classId: string
+  teacherId: string
+  isPublished: boolean
+}
+
 export interface AppwriteContentRow {
   pageId: string
   contentJson: string

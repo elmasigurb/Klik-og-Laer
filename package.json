@@ -9,7 +9,9 @@
     "typecheck": "tsc -b --pretty false",
     "test:authorization": "node --test appwrite/functions/content-manager/test/*.test.mjs",
     "audit:appwrite": "node --env-file=.env.local scripts/audit-appwrite.mjs",
+    "audit:class-readiness": "node --env-file=.env.local scripts/audit-class-readiness.mjs",
     "setup:appwrite": "node --env-file=.env.local scripts/setup-appwrite.mjs",
+    "provision:class-tables": "node --env-file=.env.local scripts/provision-class-tables.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

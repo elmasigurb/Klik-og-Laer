@@ -1,15 +1,19 @@
-import { ID, Query, type Models } from 'appwrite'
-import type { Category, CategoryTone, Exercise, ExerciseKind, ExerciseStatus } from '../../types'
+import { AppwriteException, ID, Query, type Models } from 'appwrite'
+import type { Category, CategoryTone, Exercise, ExerciseClassAssignment, ExerciseKind, ExerciseStatus, SchoolClass } from '../../types'
 import { appwriteConfig, storage, tablesDB } from '../../lib/appwrite'
 import { executeContentManager, hasTrustedContentManager } from '../../lib/appwriteFunctions'
-import { appwritePermissions, type AppwriteCategoryRow, type AppwriteExerciseRow } from '../../lib/appwriteSchema'
+import { appwritePermissions, type AppwriteCategoryRow, type AppwriteClassRow, type AppwriteExerciseClassRow, type AppwriteExerciseRow } from '../../lib/appwriteSchema'
 
 type CategoryDocument = Models.Row & AppwriteCategoryRow
 type ExerciseDocument = Models.Row & AppwriteExerciseRow
+type ClassDocument = Models.Row & AppwriteClassRow
+type ExerciseClassDocument = Models.Row & AppwriteExerciseClassRow
 
 const databaseId = appwriteConfig.databaseId
 const categoryTableId = appwriteConfig.tables.categories
 const exerciseTableId = appwriteConfig.tables.exercises
+const classTableId = appwriteConfig.tables.classes
+const exerciseClassTableId = appwriteConfig.tables.exerciseClasses
 const bucketId = appwriteConfig.buckets.exerciseFiles
 
 const rowPermissions = (published: boolean) => published ? appwritePermissions.publicPublishedRow() : appwritePermissions.teacherDraftRow()
@@ -52,6 +56,39 @@ function toExercise(row: ExerciseDocument): Exercise {
   }
 }
 
+function toClass(row: ClassDocument): SchoolClass {
+  return {
+    id: row.$id,
+    name: row.name,
+    normalizedName: row.normalizedName,
+    teacherId: row.teacherId,
+    displayOrder: row.displayOrder,
+    status: row.status,
+    createdAt: row.$createdAt,
+    updatedAt: row.$updatedAt,
+  }
+}
+
+function toAssignment(row: ExerciseClassDocument): ExerciseClassAssignment {
+  return {
+    id: row.$id,
+    exerciseId: row.exerciseId,
+    classId: row.classId,
+    teacherId: row.teacherId,
+    isPublished: row.isPublished,
+    createdAt: row.$createdAt,
+    updatedAt: row.$updatedAt,
+  }
+}
+
+async function optionalRows<T extends Models.Row>(tableId: string, queries: string[]) {
+  try { return (await tablesDB.listRows<T>({ databaseId, tableId, queries, ttl: 0 })).rows }
+  catch (reason) {
+    if (reason instanceof AppwriteException && reason.code === 404) return []
+    throw reason
+  }
+}
+
 function categoryData(category: Category): AppwriteCategoryRow {
   return {
     name: category.name,
@@ -85,12 +122,43 @@ function exerciseData(exercise: Exercise): AppwriteExerciseRow {
 
 export const appwriteCatalogRepository = {
   trustedOperationsConfigured: hasTrustedContentManager,
-  async getAll() {
-    const [categories, exercises] = await Promise.all([
+  async getAll(teacherId?: string) {
+    const [categories, exercises, classes, assignments] = await Promise.all([
       tablesDB.listRows<CategoryDocument>({ databaseId, tableId: categoryTableId, queries: [Query.orderAsc('displayOrder'), Query.limit(500)], ttl: 0 }),
       tablesDB.listRows<ExerciseDocument>({ databaseId, tableId: exerciseTableId, queries: [Query.orderDesc('$updatedAt'), Query.limit(500)], ttl: 0 }),
+      optionalRows<ClassDocument>(classTableId, [Query.orderAsc('displayOrder'), Query.limit(500)]),
+      optionalRows<ExerciseClassDocument>(exerciseClassTableId, [Query.limit(500)]),
     ])
-    return { categories: categories.rows.map(toCategory), exercises: exercises.rows.map(toExercise) }
+    return {
+      categories: categories.rows.map(toCategory),
+      exercises: exercises.rows.map(toExercise),
+      classes: classes.map(toClass).filter((item) => !teacherId || item.teacherId === teacherId),
+      assignments: assignments.map(toAssignment).filter((item) => !teacherId || item.teacherId === teacherId),
+    }
+  },
+
+  async createClass(name: string) {
+    const result = await executeContentManager<{ class: ClassDocument }>({ action: 'class.create', name })
+    return toClass(result.class)
+  },
+
+  async updateClass(classId: string, name: string) {
+    const result = await executeContentManager<{ class: ClassDocument }>({ action: 'class.update', classId, name })
+    return toClass(result.class)
+  },
+
+  async setClassStatus(classId: string, status: SchoolClass['status']) {
+    const result = await executeContentManager<{ class: ClassDocument }>({ action: 'class.setStatus', classId, status })
+    return toClass(result.class)
+  },
+
+  async reorderClasses(classIds: string[]) {
+    const result = await executeContentManager<{ classes: ClassDocument[] }>({ action: 'class.reorder', classIds })
+    return result.classes.map(toClass)
+  },
+
+  async assignExerciseClasses(exerciseIds: string[], classIds: string[], mode: 'add' | 'remove' | 'replace') {
+    return executeContentManager<{ created: number; removed: number }>({ action: 'exercise.setClasses', exerciseIds, classIds, mode })
   },
 
   async createCategory(category: Category) {

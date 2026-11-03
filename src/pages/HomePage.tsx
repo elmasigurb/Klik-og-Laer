@@ -1,14 +1,19 @@
 import { ArrowRight, BookOpenCheck, Sprout } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { CategoryCard } from '../components/catalog/CategoryCard'
+import { ClassCard } from '../components/catalog/ClassCard'
 import { useCatalog } from '../features/catalog/CatalogContext'
 import { useContent } from '../features/content/ContentContext'
+import { appwriteConfig } from '../lib/appwrite'
 
 export function HomePage() {
   const { content } = useContent()
   const copy = content.homepage
   const catalog = useCatalog()
   const categories = catalog.categories.filter((category) => category.isPublished)
+  const classes = catalog.classes.filter((item) => item.status === 'active').sort((a, b) => a.displayOrder - b.displayOrder)
+  const publishedExerciseIds = new Set(catalog.exercises.filter((item) => item.isPublished).map((item) => item.id))
+  const libraryPath = appwriteConfig.features.publicClassNavigation ? '/classes' : '/exercises'
 
   return (
     <>
@@ -19,7 +24,7 @@ export function HomePage() {
             <h1 className="display text-[clamp(3.4rem,8vw,7rem)] font-extrabold leading-[.9] tracking-[-0.055em]">{copy.heroTitleFirst}<br /><span className="text-coral">{copy.heroTitleSecond}</span></h1>
             <p className="mt-8 max-w-xl text-lg leading-8 text-white/70">{copy.heroDescription}</p>
             <div className="mt-9 flex flex-wrap gap-3">
-              <Link to="/exercises" className="inline-flex items-center gap-2 rounded-full bg-lime px-6 py-3.5 text-sm font-black text-navy transition-transform hover:-translate-y-0.5">{copy.primaryButton} <ArrowRight className="size-4" /></Link>
+              <Link to={libraryPath} className="inline-flex items-center gap-2 rounded-full bg-lime px-6 py-3.5 text-sm font-black text-navy transition-transform hover:-translate-y-0.5">{copy.primaryButton} <ArrowRight className="size-4" /></Link>
             </div>
           </div>
           <div className="relative mx-auto hidden aspect-square w-full max-w-md lg:block" aria-hidden="true">
@@ -35,10 +40,10 @@ export function HomePage() {
 
       <section className="page-shell py-20" aria-labelledby="categories-title">
         <div className="mb-10 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <div><p className="mb-3 text-xs font-black uppercase tracking-[.18em] text-navy/70">{copy.categoriesEyebrow}</p><h2 id="categories-title" className="display text-4xl font-bold tracking-[-.035em] text-forest-950 sm:text-5xl">{copy.categoriesHeading}</h2></div>
-          <Link to="/exercises" className="inline-flex items-center gap-2 text-sm font-black text-forest-800 hover:underline">{copy.categoriesLink} <ArrowRight className="size-4" /></Link>
+          <div><p className="mb-3 text-xs font-black uppercase tracking-[.18em] text-navy/70">{appwriteConfig.features.publicClassNavigation ? 'Find dit forløb' : copy.categoriesEyebrow}</p><h2 id="categories-title" className="display text-4xl font-bold tracking-[-.035em] text-forest-950 sm:text-5xl">{appwriteConfig.features.publicClassNavigation ? 'Vælg din klasse' : copy.categoriesHeading}</h2></div>
+          <Link to={libraryPath} className="inline-flex items-center gap-2 text-sm font-black text-forest-800 hover:underline">{appwriteConfig.features.publicClassNavigation ? 'Se alle klasser' : copy.categoriesLink} <ArrowRight className="size-4" /></Link>
         </div>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{categories.map((category) => <CategoryCard key={category.id} category={category} />)}</div>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{appwriteConfig.features.publicClassNavigation ? classes.map((schoolClass) => <ClassCard key={schoolClass.id} schoolClass={schoolClass} exerciseCount={new Set(catalog.exerciseClassAssignments.filter((assignment) => assignment.classId === schoolClass.id && assignment.isPublished && publishedExerciseIds.has(assignment.exerciseId)).map((assignment) => assignment.exerciseId)).size} />) : categories.map((category) => <CategoryCard key={category.id} category={category} />)}</div>
       </section>
     </>
   )

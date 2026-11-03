@@ -21,6 +21,8 @@ There is no public signup, student account, anonymous session, profile, or progr
 | Content drafts/history | No access | Read and manage |
 | Published exercise HTML | Read | Read and manage |
 | Draft/archived exercise HTML | No access | Read and manage |
+| Active classes and published assignments | Read | Owner can manage through the trusted Function |
+| Archived classes and private assignments | No access | Owner can read and manage through the trusted Function |
 
 All managed tables have row security enabled. Table-level create/read/update/delete belongs only to the Teachers Team. Published rows add `read("any")`; draft, hidden, archived, and history rows do not. The Storage bucket has File Security enabled and no bucket-level public read permission. Published files alone add `read("any")`.
 
@@ -44,3 +46,5 @@ The included Function:
 CMS publication and restoration use the same Function to create the published row and immutable version snapshot with a server-derived teacher ID. Deployment steps and the required verification matrix are in [appwrite-functions.md](appwrite-functions.md). Until those Function paths are deployed and tested with direct unauthenticated and teacher requests, treat the integration as development-ready, not production-ready.
 
 Uploaded HTML still runs in an iframe sandbox without `allow-same-origin`. Authorization controls who can fetch a file; it does not make arbitrary JavaScript trustworthy.
+
+Classes and exercise-class assignments are owner-scoped rather than team-global. The Function derives `teacherId` from the verified caller, rejects ownership mismatches, and assigns row read permission to that user. There are no table-level client write permissions on either table. This prepares the data model for multiple teachers without adding teacher tenancy to the rest of the application yet.

@@ -44,6 +44,8 @@ const tableDefinitions = [
   ['profiles', process.env.VITE_APPWRITE_PROFILES_TABLE_ID],
   ['categories', process.env.VITE_APPWRITE_CATEGORIES_TABLE_ID],
   ['exercises', process.env.VITE_APPWRITE_EXERCISES_TABLE_ID],
+  ['classes', process.env.VITE_APPWRITE_CLASSES_TABLE_ID || 'classes'],
+  ['exerciseClasses', process.env.VITE_APPWRITE_EXERCISE_CLASSES_TABLE_ID || 'exercise-classes'],
   ['content', process.env.VITE_APPWRITE_CONTENT_TABLE_ID],
   ['contentVersions', process.env.VITE_APPWRITE_CONTENT_VERSIONS_TABLE_ID],
   ['studentProgress', process.env.VITE_APPWRITE_STUDENT_PROGRESS_TABLE_ID],
@@ -111,7 +113,13 @@ async function inspectTable([alias, tableId]) {
 }
 
 const tables = []
-for (const definition of tableDefinitions) tables.push(await inspectTable(definition))
+for (const definition of tableDefinitions) {
+  try { tables.push(await inspectTable(definition)) }
+  catch (reason) {
+    if (reason?.status !== 404) throw reason
+    tables.push({ alias: definition[0], id: definition[1], missing: true })
+  }
+}
 
 const team = await request(`/teams/${encodeURIComponent(teachersTeamId)}`)
 const bucketId = process.env.VITE_APPWRITE_EXERCISE_FILES_BUCKET_ID

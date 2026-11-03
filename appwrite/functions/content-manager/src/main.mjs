@@ -32,6 +32,10 @@ export default async ({ req, res, error }) => {
       private: [Permission.read(Role.team(teamId)), Permission.update(Role.team(teamId)), Permission.delete(Role.team(teamId))],
       public: [Permission.read(Role.any()), Permission.update(Role.team(teamId)), Permission.delete(Role.team(teamId))],
     }
+    const ownerPermissions = (ownerId, published) => [
+      ...(published ? [Permission.read(Role.any())] : []),
+      Permission.read(Role.user(ownerId)),
+    ]
     let body
     try { body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body }
     catch { throw new OperationError(400, 'Anmodningen indeholder ugyldig JSON.') }
@@ -43,11 +47,19 @@ export default async ({ req, res, error }) => {
       ids: {
         database: required('DATABASE_ID'),
         exercises: required('EXERCISES_TABLE_ID'),
+        classes: required('CLASSES_TABLE_ID'),
+        exerciseClasses: required('EXERCISE_CLASSES_TABLE_ID'),
         content: required('CONTENT_TABLE_ID'),
         versions: required('CONTENT_VERSIONS_TABLE_ID'),
         bucket: required('EXERCISE_FILES_BUCKET_ID'),
       },
-      queries: { siteRows: [Query.equal('pageId', 'site'), Query.limit(10)] },
+      queries: {
+        siteRows: [Query.equal('pageId', 'site'), Query.limit(10)],
+        classesByTeacher: (teacherId) => [Query.equal('teacherId', teacherId), Query.limit(500)],
+        assignmentsByExercise: (exerciseId) => [Query.equal('exerciseId', exerciseId), Query.limit(500)],
+        assignmentsByClass: (classId) => [Query.equal('classId', classId), Query.limit(500)],
+      },
+      ownerPermissions,
       uniqueId: () => ID.unique(),
       now: () => new Date().toISOString(),
     })
