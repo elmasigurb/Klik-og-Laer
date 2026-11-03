@@ -5,16 +5,21 @@ import { Breadcrumbs } from '../components/navigation/Breadcrumbs'
 import { CategoryIcon } from '../components/ui/Icons'
 import { useCatalog } from '../features/catalog/CatalogContext'
 import { useContent } from '../features/content/ContentContext'
+import { useStudentClass } from '../features/student/StudentClassContext'
+import { appwriteConfig } from '../lib/appwrite'
 
 export function CategoryPage() {
   const { slug = '', classId } = useParams()
   const catalog = useCatalog()
   const category = catalog.categories.find((item) => item.slug === slug && item.isPublished)
-  const schoolClass = classId ? catalog.classes.find((item) => item.id === classId && item.status === 'active') : undefined
+  const { selectedClass } = useStudentClass()
+  const effectiveClassId = classId || (appwriteConfig.features.publicClassNavigation ? selectedClass?.id : undefined)
+  const schoolClass = effectiveClassId ? catalog.classes.find((item) => item.id === effectiveClassId && item.status === 'active') : undefined
   const { content } = useContent()
   const copy = content.categories
-  if (!category || (classId && !schoolClass)) return <Navigate to="/404" replace />
-  const assignedIds = classId ? new Set(catalog.exerciseClassAssignments.filter((item) => item.classId === classId && item.isPublished).map((item) => item.exerciseId)) : null
+  if (appwriteConfig.features.publicClassNavigation && !schoolClass) return <Navigate to="/classes" replace />
+  if (!category || (effectiveClassId && !schoolClass)) return <Navigate to="/404" replace />
+  const assignedIds = effectiveClassId ? new Set(catalog.exerciseClassAssignments.filter((item) => item.classId === effectiveClassId && item.isPublished).map((item) => item.exerciseId)) : null
   const items = catalog.exercises.filter((exercise) => exercise.categoryId === category.id && exercise.isPublished && (!assignedIds || assignedIds.has(exercise.id)))
 
   return <div className="page-shell py-10 sm:py-14">

@@ -79,6 +79,14 @@ Only after assignments have been reviewed, set:
 VITE_PUBLIC_CLASS_NAVIGATION_ENABLED=true
 ```
 
-Rebuild and deploy the frontend. The flag changes the homepage and primary navigation to `Classes → Categories → Exercises`. The legacy `/exercises`, `/categories/:slug`, and `/exercises/:id` routes remain available for old links.
+Rebuild and deploy the frontend. The flag adds the anonymous **Vælg klasse** selector and changes the student flow to `Class → Categories → Exercises`. The selected active class is stored only in that browser's local storage and is also carried in class-scoped URLs. No student account or progress record is created. Unscoped legacy routes remain available for old links, but resolve through the selected class while the feature is enabled.
 
 Rollback requires only setting the flag back to `false` and redeploying. Class and assignment data can stay in place.
+
+## 7. Uploaded exercise sizing
+
+Uploaded HTML is never inserted into the React document. At render time, the frontend creates an in-memory copy with a small resize bridge and loads it into the existing sandboxed iframe. The stored Appwrite file is not changed.
+
+The bridge observes layout, DOM, font, image, feedback, and viewport changes and reports a bounded integer height. The parent accepts a resize only from the exact iframe window, the sandbox's opaque `null` origin, the current protocol version, and an unpredictable per-frame identifier. The iframe sandbox remains `allow-scripts allow-forms`; `allow-same-origin` is deliberately not enabled.
+
+If a document prevents the bridge from running or replaces its entire document lifecycle, the page falls back to a contained scrolling frame with a user-controlled height increase. Securely measuring an uncooperative cross-origin sandbox from the parent is not possible without weakening the sandbox.

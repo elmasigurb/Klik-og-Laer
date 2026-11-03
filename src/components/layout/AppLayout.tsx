@@ -3,20 +3,27 @@ import { Menu, X } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useContent } from '../../features/content/ContentContext'
 import { appwriteConfig } from '../../lib/appwrite'
+import { StudentClassSelector } from '../catalog/StudentClassSelector'
+import { StudentClassProvider, useStudentClass } from '../../features/student/StudentClassContext'
 
 export function AppLayout() {
+  return <StudentClassProvider><StudentAppLayout /></StudentClassProvider>
+}
+
+function StudentAppLayout() {
   const [open, setOpen] = useState(false)
   const { content } = useContent()
+  const { selectedClass } = useStudentClass()
   const copy = content.navigation
   const navItems = [
     { to: '/', label: copy.homeLabel, end: true },
-    { to: appwriteConfig.features.publicClassNavigation ? '/classes' : '/exercises', label: appwriteConfig.features.publicClassNavigation ? 'Klasser' : copy.exercisesLabel },
+    { to: appwriteConfig.features.publicClassNavigation ? selectedClass ? `/classes/${selectedClass.id}` : '/classes' : '/exercises', label: appwriteConfig.features.publicClassNavigation ? 'Min klasse' : copy.exercisesLabel },
   ]
-  const navClass = ({ isActive }: { isActive: boolean }) => `rounded-full px-4 py-2 text-sm font-semibold transition-colors ${isActive ? 'bg-forest-900 text-white' : 'text-ink hover:bg-white/70'}`
+  const navClass = ({ isActive }: { isActive: boolean }) => `inline-flex min-h-11 items-center rounded-full px-4 py-2 text-base font-semibold transition-colors ${isActive ? 'bg-forest-900 text-white' : 'text-ink hover:bg-white/70'}`
 
   return (
-    <div className="min-h-screen bg-cream-100">
-      <header className="sticky top-0 z-40 border-b border-forest-900/8 bg-cream-100/90 backdrop-blur-xl">
+    <div className="student-app min-h-screen bg-cream-100">
+      <header className="relative z-40 border-b border-forest-900/8 bg-cream-100">
         <div className="page-shell flex h-20 items-center justify-between">
           <NavLink to="/" className="group flex items-center gap-3" aria-label={copy.logoAriaLabel}>
             <span className="grid size-10 place-items-center rounded-[14px] bg-coral text-sm font-black text-navy transition-transform group-hover:-rotate-3">k&l</span>
@@ -34,6 +41,7 @@ export function AppLayout() {
           </nav>
         )}
       </header>
+      {appwriteConfig.features.publicClassNavigation && <StudentClassSelector />}
       <main><Outlet /></main>
       <footer className="mt-24 border-t border-forest-900/10 py-10">
         <div className="page-shell flex flex-col justify-between gap-4 text-sm text-muted sm:flex-row"><p><strong className="font-display lowercase text-navy">klik & lær.</strong> · {content.footer.tagline}</p><p>{content.footer.publicNote}</p></div>
