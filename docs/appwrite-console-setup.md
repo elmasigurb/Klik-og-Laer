@@ -61,6 +61,34 @@ Keep profile rows private to the matching user and the teachers Team. Prefer a t
 
 Add a compound index on `categoryId` and `isPublished`.
 
+### `classes`
+
+Provision this table with the supplied scripts when possible. It has no table-level client permissions; all writes go through `content-manager`.
+
+| Column | Type | Required / notes |
+| --- | --- | --- |
+| `name` | string, 128 | required |
+| `normalizedName` | string, 128 | required; derived server-side |
+| `activeNameKey` | string, 200 | required; unique index; derived server-side |
+| `teacherId` | string, 36 | required; verified caller ID |
+| `displayOrder` | integer | required |
+| `status` | string, 16 | required; `active` or `archived` |
+
+Add indexes for unique `activeNameKey`, `teacherId + status + displayOrder`, and `status + displayOrder`.
+
+### `exercise-classes`
+
+This junction table also has no table-level client permissions. It stores relationships only; exercises and HTML files are not duplicated.
+
+| Column | Type | Required / notes |
+| --- | --- | --- |
+| `exerciseId` | string, 36 | required |
+| `classId` | string, 36 | required |
+| `teacherId` | string, 36 | required; verified caller ID |
+| `isPublished` | boolean | required; derived from exercise and class state |
+
+Add a unique index on `exerciseId + classId`, plus indexes for `classId + isPublished`, `exerciseId`, and `teacherId + classId`.
+
 ### `site-content`
 
 | Column | Type | Required / notes |
@@ -103,6 +131,8 @@ For `categories`, `exercises`, `site-content`, and `content-versions`:
 - Draft row read/update/delete: teachers Team only.
 
 Because Appwrite grants access if either table-level or row-level permission allows it, public read must be attached only to published rows. Use a trusted Appwrite Function to publish and restore content atomically and to assign the final permissions.
+
+For `classes` and `exercise-classes`, use no table-level permissions. Active/public rows receive `read("any")` plus read permission for their owning user; archived/private rows receive only owner read. The Function's scoped server key performs writes after checking Teachers Team membership and row ownership.
 
 ## 5. Storage
 

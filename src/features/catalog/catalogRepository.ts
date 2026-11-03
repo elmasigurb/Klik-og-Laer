@@ -1,8 +1,10 @@
 import { seedCategories, seedExercises } from '../../data/mock/catalog'
-import type { Category, Exercise } from '../../types'
+import type { Category, Exercise, ExerciseClassAssignment, SchoolClass } from '../../types'
 
 const CATEGORY_KEY = 'klik-og-laer:categories:v1'
 const EXERCISE_KEY = 'klik-og-laer:exercises:v1'
+const CLASS_KEY = 'klik-og-laer:classes:v1'
+const EXERCISE_CLASS_KEY = 'klik-og-laer:exercise-classes:v1'
 
 function read<T>(key: string, fallback: T): T {
   try {
@@ -20,8 +22,12 @@ function write<T>(key: string, value: T) {
 export interface CatalogRepository {
   getCategories(): Category[]
   getExercises(): Exercise[]
+  getClasses(): SchoolClass[]
+  getExerciseClassAssignments(): ExerciseClassAssignment[]
   saveCategories(categories: Category[]): void
   saveExercises(exercises: Exercise[]): void
+  saveClasses(classes: SchoolClass[]): void
+  saveExerciseClassAssignments(assignments: ExerciseClassAssignment[]): void
 }
 
 export const localCatalogRepository: CatalogRepository = {
@@ -30,8 +36,12 @@ export const localCatalogRepository: CatalogRepository = {
     ...item,
     status: item.status ?? (item.isPublished ? 'published' : 'draft'),
   })),
+  getClasses: () => read<SchoolClass[]>(CLASS_KEY, []).map((item) => ({ ...item })),
+  getExerciseClassAssignments: () => read<ExerciseClassAssignment[]>(EXERCISE_CLASS_KEY, []).map((item) => ({ ...item })),
   saveCategories: (categories) => write(CATEGORY_KEY, categories),
   saveExercises: (exercises) => write(EXERCISE_KEY, exercises),
+  saveClasses: (classes) => write(CLASS_KEY, classes),
+  saveExerciseClassAssignments: (assignments) => write(EXERCISE_CLASS_KEY, assignments),
 }
 
 export function slugify(value: string) {

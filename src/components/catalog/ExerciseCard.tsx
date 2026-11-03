@@ -7,12 +7,12 @@ const accents: Record<string, string> = {
   mint: 'from-lime to-ivory', moss: 'from-lime to-periwinkle/40', apricot: 'from-coral to-ivory', clay: 'from-coral/80 to-lime/50', sky: 'from-periwinkle to-ivory', blue: 'from-periwinkle to-lime/45', violet: 'from-periwinkle to-coral/40', rose: 'from-coral to-periwinkle/35', berry: 'from-coral/70 to-periwinkle/65',
 }
 
-export function ExerciseCard({ exercise }: { exercise: Exercise }) {
+export function ExerciseCard({ exercise, to }: { exercise: Exercise; to?: string }) {
   const { content } = useContent()
   const copy = content.exercises
   return (
     <article className="card-lift overflow-hidden rounded-[26px] border border-forest-900/8 bg-cream-50">
-      <Link to={`/exercises/${exercise.id}`} className="group block">
+      <Link to={to ?? `/exercises/${exercise.id}`} className="group block">
         <div className={`relative flex h-36 items-end overflow-hidden bg-gradient-to-br p-5 ${accents[exercise.accent] ?? accents.mint}`}>
           <div className="absolute -right-7 -top-12 size-36 rounded-full border-[24px] border-white/30" />
           <div className="absolute right-16 top-9 size-9 rotate-12 rounded-lg bg-white/35" />

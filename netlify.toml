@@ -4,6 +4,9 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  VITE_APPWRITE_CLASSES_TABLE_ID = "classes"
+  VITE_APPWRITE_EXERCISE_CLASSES_TABLE_ID = "exercise-classes"
+  VITE_PUBLIC_CLASS_NAVIGATION_ENABLED = "false"
 
 [[redirects]]
   from = "/*"
