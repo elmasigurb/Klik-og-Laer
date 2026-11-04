@@ -79,7 +79,9 @@ Only after assignments have been reviewed, set:
 VITE_PUBLIC_CLASS_NAVIGATION_ENABLED=true
 ```
 
-Rebuild and deploy the frontend. The flag adds the anonymous **Vælg klasse** selector and changes the student flow to `Class → Categories → Exercises`. The selected active class is stored only in that browser's local storage and is also carried in class-scoped URLs. No student account or progress record is created. Unscoped legacy routes remain available for old links, but resolve through the selected class while the feature is enabled.
+Rebuild and deploy the frontend. The flag adds an anonymous **Klasse** selector directly to the main navigation. **Alle klasser** is the default and keeps every published exercise available, including unassigned exercises. Choosing an active class filters categories and exercises to that class; choosing **Alle klasser** removes the filter.
+
+An explicitly selected active class is stored only in that browser's local storage and is also carried in class-scoped URLs. Archived or deleted selections fall back to **Alle klasser**. No student account or progress record is created. Unscoped legacy routes remain available for old links and show the complete catalog when no class is selected.
 
 Rollback requires only setting the flag back to `false` and redeploying. Class and assignment data can stay in place.
 

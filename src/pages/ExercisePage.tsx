@@ -20,7 +20,6 @@ export function ExercisePage() {
   const { content } = useContent()
   const copy = content.exercises
 
-  if (appwriteConfig.features.publicClassNavigation && !schoolClass) return <Navigate to="/classes" replace />
   if (!exercise || !category || (effectiveClassId && (!schoolClass || !assigned))) return <Navigate to="/404" replace />
   return <div className="page-shell py-10 sm:py-14">
     <Breadcrumbs items={schoolClass ? [{ label: 'Klasser', to: '/classes' }, { label: schoolClass.name, to: `/classes/${schoolClass.id}` }, { label: category.name, to: `/classes/${schoolClass.id}/categories/${category.slug}` }, { label: exercise.title }] : [{ label: content.categories.breadcrumbLabel, to: '/exercises' }, { label: category.name, to: `/categories/${category.slug}` }, { label: exercise.title }]} />

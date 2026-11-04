@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { getClassIdFromPath, persistSelectedClassId, readSelectedClassId, resolveSelectedClassId, STUDENT_CLASS_STORAGE_KEY } from './studentClassSelection.mjs'
+import { getClassIdFromPath, getVisibleExerciseIds, persistSelectedClassId, readSelectedClassId, resolveSelectedClassId, STUDENT_CLASS_STORAGE_KEY } from './studentClassSelection.mjs'
 
 function memoryStorage() {
   const values = new Map()
@@ -23,6 +23,18 @@ test('class selection persists without storing student identity', () => {
 test('only an active persisted class is restored', () => {
   assert.equal(resolveSelectedClassId('class-a', ['class-a', 'class-b']), 'class-a')
   assert.equal(resolveSelectedClassId('archived-class', ['class-a']), '')
+})
+
+test('Alle klasser includes assigned and unassigned published exercises', () => {
+  const exerciseIds = ['unassigned', 'shared', 'class-b-only']
+  const assignments = [
+    { exerciseId: 'shared', classId: 'class-a', isPublished: true },
+    { exerciseId: 'shared', classId: 'class-b', isPublished: true },
+    { exerciseId: 'class-b-only', classId: 'class-b', isPublished: true },
+  ]
+  assert.deepEqual(getVisibleExerciseIds(exerciseIds, '', assignments), exerciseIds)
+  assert.deepEqual(getVisibleExerciseIds(exerciseIds, 'class-a', assignments), ['shared'])
+  assert.deepEqual(getVisibleExerciseIds(exerciseIds, 'class-b', assignments), ['shared', 'class-b-only'])
 })
 
 test('class routes keep the selected class across category and exercise navigation', () => {

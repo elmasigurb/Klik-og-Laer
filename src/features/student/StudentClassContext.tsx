@@ -29,17 +29,23 @@ export function StudentClassProvider({ children }: { children: ReactNode }) {
       persistSelectedClassId(window.localStorage, routeClassId)
       return
     }
+    if (!loading && routeClassId && !activeIds.includes(routeClassId)) {
+      setSelectedClassId('')
+      persistSelectedClassId(window.localStorage, '')
+      navigate('/exercises', { replace: true })
+      return
+    }
     if (!loading && selectedClassId && !activeIds.includes(selectedClassId)) {
       setSelectedClassId('')
       persistSelectedClassId(window.localStorage, '')
     }
-  }, [activeIds, loading, routeClassId, selectedClassId])
+  }, [activeIds, loading, navigate, routeClassId, selectedClassId])
 
   const selectClass = useCallback((classId: string) => {
     const resolved = resolveSelectedClassId(classId, activeIds)
     setSelectedClassId(resolved)
     persistSelectedClassId(window.localStorage, resolved)
-    navigate(resolved ? `/classes/${encodeURIComponent(resolved)}` : '/classes')
+    navigate(resolved ? `/classes/${encodeURIComponent(resolved)}` : '/exercises')
   }, [activeIds, navigate])
 
   const value = useMemo<StudentClassValue>(() => ({

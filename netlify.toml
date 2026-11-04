@@ -8,6 +8,9 @@
   VITE_APPWRITE_EXERCISE_CLASSES_TABLE_ID = "exercise-classes"
   VITE_PUBLIC_CLASS_NAVIGATION_ENABLED = "false"
 
+[context.deploy-preview.environment]
+  VITE_PUBLIC_CLASS_NAVIGATION_ENABLED = "true"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

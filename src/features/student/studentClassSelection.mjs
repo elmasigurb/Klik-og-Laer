@@ -22,3 +22,11 @@ export function persistSelectedClassId(storage, classId) {
 export function resolveSelectedClassId(selectedClassId, activeClassIds) {
   return activeClassIds.includes(selectedClassId) ? selectedClassId : ''
 }
+
+export function getVisibleExerciseIds(exerciseIds, selectedClassId, assignments) {
+  if (!selectedClassId) return [...exerciseIds]
+  const assignedIds = new Set(assignments
+    .filter((assignment) => assignment.classId === selectedClassId && assignment.isPublished)
+    .map((assignment) => assignment.exerciseId))
+  return exerciseIds.filter((exerciseId) => assignedIds.has(exerciseId))
+}
