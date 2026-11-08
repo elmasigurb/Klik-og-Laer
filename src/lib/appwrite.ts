@@ -15,6 +15,8 @@ export const appwriteConfig = {
   tables: {
     categories: import.meta.env.VITE_APPWRITE_CATEGORIES_TABLE_ID?.trim() || 'categories',
     exercises: import.meta.env.VITE_APPWRITE_EXERCISES_TABLE_ID?.trim() || 'exercises',
+    classes: import.meta.env.VITE_APPWRITE_CLASSES_TABLE_ID?.trim() || 'classes',
+    exerciseClasses: import.meta.env.VITE_APPWRITE_EXERCISE_CLASSES_TABLE_ID?.trim() || 'exercise-classes',
     content: import.meta.env.VITE_APPWRITE_CONTENT_TABLE_ID?.trim() || 'site-content',
     contentVersions: import.meta.env.VITE_APPWRITE_CONTENT_VERSIONS_TABLE_ID?.trim() || 'content-versions',
   },
@@ -23,6 +25,11 @@ export const appwriteConfig = {
   },
   functions: {
     contentManager: import.meta.env.VITE_APPWRITE_CONTENT_MANAGER_FUNCTION_ID?.trim() ?? '',
+    studentProgress: import.meta.env.VITE_APPWRITE_STUDENT_PROGRESS_FUNCTION_ID?.trim() ?? '',
+  },
+  features: {
+    publicClassNavigation: import.meta.env.VITE_PUBLIC_CLASS_NAVIGATION_ENABLED?.trim().toLowerCase() === 'true',
+    studentProgress: import.meta.env.VITE_STUDENT_PROGRESS_ENABLED?.trim().toLowerCase() === 'true',
   },
 } as const
 

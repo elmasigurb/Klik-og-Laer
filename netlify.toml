@@ -4,6 +4,17 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  VITE_APPWRITE_CLASSES_TABLE_ID = "classes"
+  VITE_APPWRITE_EXERCISE_CLASSES_TABLE_ID = "exercise-classes"
+  VITE_PUBLIC_CLASS_NAVIGATION_ENABLED = "false"
+
+[context.production.environment]
+  VITE_STUDENT_PROGRESS_ENABLED = "false"
+
+[context.deploy-preview.environment]
+  VITE_PUBLIC_CLASS_NAVIGATION_ENABLED = "true"
+  VITE_APPWRITE_STUDENT_PROGRESS_FUNCTION_ID = "student-progress"
+  VITE_STUDENT_PROGRESS_ENABLED = "true"
 
 [[redirects]]
   from = "/*"

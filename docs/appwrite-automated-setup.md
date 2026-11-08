@@ -1,6 +1,8 @@
 # Appwrite automated schema setup
 
-The setup command uses the official `node-appwrite` Server SDK. It only targets the database, six tables, Teachers Team, and exercise-files bucket whose existing IDs are supplied in `.env.local`. It does not create or delete databases, tables, buckets, rows, or files.
+The setup command uses the official `node-appwrite` Server SDK. It targets the configured tables, Teachers Team, and exercise-files bucket. It does not create or delete databases, tables, buckets, rows, or files.
+
+Class tables are intentionally provisioned separately. `npm run provision:class-tables` is read-only by default; its explicitly approved `--apply` mode can create only the two missing empty tables. After that, the normal setup command adds their columns and indexes. See [Class management rollout](class-management-migration.md).
 
 ## Dry run
 

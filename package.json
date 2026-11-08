@@ -7,9 +7,14 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
+    "test:student-ui": "node --test src/features/student/*.test.mjs src/features/exercises/*.test.mjs src/styles/*.test.mjs",
     "test:authorization": "node --test appwrite/functions/content-manager/test/*.test.mjs",
     "audit:appwrite": "node --env-file=.env.local scripts/audit-appwrite.mjs",
+    "audit:class-readiness": "node --env-file=.env.local scripts/audit-class-readiness.mjs",
     "setup:appwrite": "node --env-file=.env.local scripts/setup-appwrite.mjs",
+    "provision:class-tables": "node --env-file=.env.local scripts/provision-class-tables.mjs",
+    "provision:progress-tables": "node --env-file=.env.local scripts/provision-progress-tables.mjs",
+    "test:progress": "node --test appwrite/functions/student-progress/test/*.test.mjs appwrite/functions/content-manager/test/progress-operations.test.mjs scripts/*.test.mjs src/features/progress/*.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

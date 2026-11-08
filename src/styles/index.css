@@ -36,8 +36,8 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--copenhagen-ivory); }
+html { max-width: 100%; overflow-x: hidden; scroll-behavior: smooth; }
+body { margin: 0; min-width: 320px; min-height: 100vh; max-width: 100%; overflow-x: hidden; background: var(--copenhagen-ivory); }
 button, input, select, textarea { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 
@@ -47,7 +47,10 @@ button, a { -webkit-tap-highlight-color: transparent; }
 }
 
 .display { font-family: var(--font-display); }
-.page-shell { width: min(1180px, calc(100% - 2rem)); margin-inline: auto; }
+.page-shell { width: min(1240px, calc(100% - 2rem)); margin-inline: auto; }
+.student-app button, .student-app a, .student-app input, .student-app select { touch-action: manipulation; }
+.student-app input, .student-app select, .student-app textarea { font-size: max(1rem, 16px); }
+.student-app iframe, .student-app img, .student-app svg { max-width: 100%; }
 .admin-input { width: 100%; min-height: 2.75rem; border-radius: 0.875rem; border: 1px solid rgba(40, 59, 104, .16); background: #fff; padding: .7rem .85rem; color: var(--copenhagen-navy); outline: none; transition: border-color 160ms ease, box-shadow 160ms ease; }
 .admin-input:focus { border-color: var(--copenhagen-navy); box-shadow: 0 0 0 3px rgba(185, 200, 237, .55); }
 .admin-label { display: block; margin-bottom: .45rem; color: var(--copenhagen-navy); font-size: .875rem; font-weight: 700; }
@@ -59,6 +62,15 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .card-lift:hover { transform: translateY(-4px); box-shadow: var(--shadow-soft); border-color: rgba(40, 59, 104, .2); }
 .grain { position: relative; isolation: isolate; overflow: hidden; }
 .grain::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .035; z-index: -1; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E"); }
+
+@media (max-width: 767px) {
+  .page-shell { width: min(100% - 1.25rem, 1240px); }
+}
+
+@media (pointer: coarse) {
+  .student-app button, .student-app select { min-height: 44px; }
+  .card-lift:hover { transform: none; box-shadow: none; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }

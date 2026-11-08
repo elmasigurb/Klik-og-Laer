@@ -11,6 +11,9 @@ interface ImportMetaEnv {
   readonly VITE_APPWRITE_CONTENT_VERSIONS_TABLE_ID?: string
   readonly VITE_APPWRITE_EXERCISE_FILES_BUCKET_ID?: string
   readonly VITE_APPWRITE_CONTENT_MANAGER_FUNCTION_ID?: string
+  readonly VITE_APPWRITE_STUDENT_PROGRESS_FUNCTION_ID?: string
+  readonly VITE_PUBLIC_CLASS_NAVIGATION_ENABLED?: string
+  readonly VITE_STUDENT_PROGRESS_ENABLED?: string
 }
 
 interface ImportMeta {

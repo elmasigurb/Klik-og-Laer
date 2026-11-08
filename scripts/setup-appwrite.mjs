@@ -26,6 +26,8 @@ const commonEnvironment = [
   'VITE_APPWRITE_PROFILES_TABLE_ID',
   'VITE_APPWRITE_CATEGORIES_TABLE_ID',
   'VITE_APPWRITE_EXERCISES_TABLE_ID',
+  'VITE_APPWRITE_CLASSES_TABLE_ID',
+  'VITE_APPWRITE_EXERCISE_CLASSES_TABLE_ID',
   'VITE_APPWRITE_CONTENT_TABLE_ID',
   'VITE_APPWRITE_CONTENT_VERSIONS_TABLE_ID',
   'VITE_APPWRITE_STUDENT_PROGRESS_TABLE_ID',
@@ -129,6 +131,41 @@ const tableDefinitions = [
         ['categoryId', 'isPublished'],
         [OrderBy.Asc, OrderBy.Asc],
       ),
+    ],
+  },
+  {
+    alias: 'classes',
+    id: process.env.VITE_APPWRITE_CLASSES_TABLE_ID,
+    permissions: [],
+    columns: [
+      column('name', 'varchar', true, 128),
+      column('normalizedName', 'varchar', true, 128),
+      column('activeNameKey', 'varchar', true, 200),
+      column('teacherId', 'varchar', true, 36),
+      column('displayOrder', 'integer', true),
+      column('status', 'varchar', true, 16),
+    ],
+    indexes: [
+      index('classes_active_name_unique', TablesDBIndexType.Unique, ['activeNameKey'], [OrderBy.Asc]),
+      index('classes_teacher_status_order', TablesDBIndexType.Key, ['teacherId', 'status', 'displayOrder'], [OrderBy.Asc, OrderBy.Asc, OrderBy.Asc]),
+      index('classes_status_order', TablesDBIndexType.Key, ['status', 'displayOrder'], [OrderBy.Asc, OrderBy.Asc]),
+    ],
+  },
+  {
+    alias: 'exerciseClasses',
+    id: process.env.VITE_APPWRITE_EXERCISE_CLASSES_TABLE_ID,
+    permissions: [],
+    columns: [
+      column('exerciseId', 'varchar', true, 36),
+      column('classId', 'varchar', true, 36),
+      column('teacherId', 'varchar', true, 36),
+      column('isPublished', 'boolean', true),
+    ],
+    indexes: [
+      index('exercise_classes_unique', TablesDBIndexType.Unique, ['exerciseId', 'classId'], [OrderBy.Asc, OrderBy.Asc]),
+      index('exercise_classes_class_public', TablesDBIndexType.Key, ['classId', 'isPublished'], [OrderBy.Asc, OrderBy.Asc]),
+      index('exercise_classes_exercise', TablesDBIndexType.Key, ['exerciseId'], [OrderBy.Asc]),
+      index('exercise_classes_teacher_class', TablesDBIndexType.Key, ['teacherId', 'classId'], [OrderBy.Asc, OrderBy.Asc]),
     ],
   },
   {
@@ -258,11 +295,32 @@ const current = new Map()
 await teams.get({ teamId: teachersTeamId })
 
 for (const definition of tableDefinitions) {
-  const [table, columnList, indexList] = await Promise.all([
-    tablesDB.getTable({ databaseId, tableId: definition.id }),
-    tablesDB.listColumns({ databaseId, tableId: definition.id, total: false }),
-    tablesDB.listIndexes({ databaseId, tableId: definition.id, total: false }),
-  ])
+  let table
+  let columnList
+  let indexList
+  try {
+    ;[table, columnList, indexList] = await Promise.all([
+      tablesDB.getTable({ databaseId, tableId: definition.id }),
+      tablesDB.listColumns({ databaseId, tableId: definition.id, total: false }),
+      tablesDB.listIndexes({ databaseId, tableId: definition.id, total: false }),
+    ])
+  } catch (reason) {
+    if (reason?.code !== 404) throw reason
+    if (apply) {
+      conflicts.push({
+        resource: `table:${definition.alias}`,
+        expected: { id: definition.id, rowSecurity: true, permissions: normalize(definition.permissions) },
+        actual: { missing: true },
+        reason: 'The table must be created first with npm run provision:class-tables -- --apply.',
+      })
+    } else {
+      plan.push({ action: 'await-table-provision', table: definition.alias, tableId: definition.id })
+      for (const expected of definition.columns) plan.push({ action: 'create-column-after-provision', table: definition.alias, tableId: definition.id, column: expected })
+      for (const expected of definition.indexes) plan.push({ action: 'create-index-after-provision', table: definition.alias, tableId: definition.id, index: expected })
+      plan.push({ action: 'set-table-security-after-provision', table: definition.alias, tableId: definition.id, to: { rowSecurity: true, permissions: normalize(definition.permissions) } })
+    }
+    continue
+  }
   current.set(definition.id, { table, columns: columnList.columns, indexes: indexList.indexes })
 
   for (const expected of definition.columns) {

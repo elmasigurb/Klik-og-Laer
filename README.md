@@ -1,6 +1,6 @@
 # Klik & Lær
 
-Klik & Lær is a public Danish exercise library with a separate, teacher-only administration area. Visitors do not create accounts and results are never persisted. The authorized teacher manages categories, HTML exercises, and website copy through Appwrite.
+Klik & Lær is a public Danish exercise library with a separate, teacher-only administration area. The authorized teacher manages categories, HTML exercises, classes, website copy, and student completion records through Appwrite. Student progress is implemented locally but remains disabled by default and is not deployed.
 
 ## Start locally
 
@@ -21,7 +21,7 @@ npm run build
 
 Only published categories, exercise metadata, HTML files, and website copy are public. Uploaded exercises run in a sandboxed iframe without `allow-same-origin`; any score or feedback exists only for the current page session.
 
-There is no student registration, login, profile, dashboard, or progress repository. Older browser records are not read or deleted.
+When `VITE_STUDENT_PROGRESS_ENABLED=true`, a student registers with a name and active class, receives an opaque browser credential, and sees completed exercise indicators. The deployed interface remains unchanged while the flag is false. See [the student-progress implementation guide](docs/student-progress-phase-3a.md) for security limitations and rollout steps.
 
 ## Teacher administration
 
@@ -34,6 +34,11 @@ The dashboard supports:
 - draft, published, and archived exercise states;
 - permanent deletion behind explicit confirmation;
 - website-copy drafts, preview, publication, history, and restoration.
+- owner-scoped class creation, renaming, ordering, archiving, and restoration;
+- individual and bulk assignment of one stored exercise to multiple classes.
+- client-reported student completion totals, dates, name/class correction, and privacy-preserving deletion under `/admin/progress`.
+
+Public class navigation is guarded by `VITE_PUBLIC_CLASS_NAVIGATION_ENABLED` and is disabled by default. Existing public category/exercise navigation remains active while teachers organize content. Follow [the class rollout guide](docs/class-management-migration.md) before enabling it.
 
 When Appwrite contains no managed rows, the application keeps showing the existing local Phase 1/2 data. A signed-in teacher can explicitly import each local repository under `/admin/settings`. Import never removes the localStorage/IndexedDB copy and refuses to run against non-empty target tables.
 
@@ -43,4 +48,4 @@ React route guards improve navigation but are not authorization. TablesDB row pe
 
 Publishing an exercise changes both its row and file permissions. Appwrite-backed publication, archiving, replacement, permanent deletion, CMS publication, and restoration are therefore blocked until the trusted Function is configured. Follow [the Function deployment guide](docs/appwrite-functions.md), then run the direct public/teacher verification matrix before treating the deployment as production-ready.
 
-The live schema can be checked with `npm run audit:appwrite`; the reviewed idempotent configuration tool is documented in [Appwrite automated setup](docs/appwrite-automated-setup.md).
+The live schema can be checked with `npm run audit:appwrite`; class rollout readiness is checked with `npm run audit:class-readiness`. The reviewed idempotent configuration tool is documented in [Appwrite automated setup](docs/appwrite-automated-setup.md).

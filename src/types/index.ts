@@ -14,6 +14,29 @@ export interface Category {
   updatedAt: string
 }
 
+export type ClassStatus = 'active' | 'archived'
+
+export interface SchoolClass {
+  id: string
+  name: string
+  normalizedName: string
+  teacherId: string
+  displayOrder: number
+  status: ClassStatus
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ExerciseClassAssignment {
+  id: string
+  exerciseId: string
+  classId: string
+  teacherId: string
+  isPublished: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 export type ExerciseKind = 'choice' | 'fill' | 'match' | 'sentence' | 'upload'
 export type ExerciseStatus = 'draft' | 'published' | 'archived'
 
