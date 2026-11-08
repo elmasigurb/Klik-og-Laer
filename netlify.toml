@@ -9,7 +9,8 @@
   VITE_PUBLIC_CLASS_NAVIGATION_ENABLED = "false"
 
 [context.production.environment]
-  VITE_STUDENT_PROGRESS_ENABLED = "false"
+  VITE_APPWRITE_STUDENT_PROGRESS_FUNCTION_ID = "student-progress"
+  VITE_STUDENT_PROGRESS_ENABLED = "true"
 
 [context.deploy-preview.environment]
   VITE_PUBLIC_CLASS_NAVIGATION_ENABLED = "true"
