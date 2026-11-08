@@ -16,6 +16,7 @@ import { AdminLoginPage } from '../pages/admin/AdminLoginPage'
 import { AdminSettingsPage } from '../pages/admin/AdminSettingsPage'
 import { AdminContentPage } from '../pages/admin/AdminContentPage'
 import { AdminClassesPage } from '../pages/admin/AdminClassesPage'
+import { AdminProgressPage } from '../pages/admin/AdminProgressPage'
 import { TeacherGuard } from '../components/admin/TeacherGuard'
 import { appwriteConfig } from '../lib/appwrite'
 
@@ -42,6 +43,7 @@ export function App() {
         <Route path="exercises/:id/edit" element={<AdminExerciseFormPage />} />
         <Route path="categories" element={<AdminCategoriesPage />} />
         <Route path="classes" element={<AdminClassesPage />} />
+        <Route path="progress" element={<AdminProgressPage />} />
         <Route path="content" element={<AdminContentPage />} />
         <Route path="settings" element={<AdminSettingsPage />} />
       </Route>

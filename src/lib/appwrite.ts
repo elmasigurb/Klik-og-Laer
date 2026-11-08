@@ -25,9 +25,11 @@ export const appwriteConfig = {
   },
   functions: {
     contentManager: import.meta.env.VITE_APPWRITE_CONTENT_MANAGER_FUNCTION_ID?.trim() ?? '',
+    studentProgress: import.meta.env.VITE_APPWRITE_STUDENT_PROGRESS_FUNCTION_ID?.trim() ?? '',
   },
   features: {
     publicClassNavigation: import.meta.env.VITE_PUBLIC_CLASS_NAVIGATION_ENABLED?.trim().toLowerCase() === 'true',
+    studentProgress: import.meta.env.VITE_STUDENT_PROGRESS_ENABLED?.trim().toLowerCase() === 'true',
   },
 } as const
 

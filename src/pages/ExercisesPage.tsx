@@ -6,15 +6,18 @@ import { useContent } from '../features/content/ContentContext'
 import { useStudentClass } from '../features/student/StudentClassContext'
 import { appwriteConfig } from '../lib/appwrite'
 import { getVisibleExerciseIds } from '../features/student/studentClassSelection.mjs'
+import { useStudentProgress } from '../features/progress/StudentProgressContext'
 
 export function ExercisesPage() {
   const { content } = useContent()
   const copy = content.exercises
   const catalog = useCatalog()
   const { selectedClass } = useStudentClass()
+  const progress = useStudentProgress()
   const allCategories = catalog.categories.filter((category) => category.isPublished)
   const publishedExercises = catalog.exercises.filter((exercise) => exercise.isPublished && allCategories.some((category) => category.id === exercise.categoryId))
-  const visibleIds = new Set(getVisibleExerciseIds(publishedExercises.map((exercise) => exercise.id), selectedClass?.id ?? '', catalog.exerciseClassAssignments))
+  const effectiveClassId = progress.enabled ? progress.identity?.classId ?? '' : selectedClass?.id ?? ''
+  const visibleIds = new Set(getVisibleExerciseIds(publishedExercises.map((exercise) => exercise.id), effectiveClassId, catalog.exerciseClassAssignments))
   const exercises = publishedExercises.filter((exercise) => visibleIds.has(exercise.id))
   const categories = allCategories.filter((category) => exercises.some((exercise) => exercise.categoryId === category.id))
   const [query, setQuery] = useState('')

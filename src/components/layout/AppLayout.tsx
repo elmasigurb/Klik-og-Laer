@@ -6,9 +6,11 @@ import { appwriteConfig } from '../../lib/appwrite'
 import { StudentClassSelector } from '../catalog/StudentClassSelector'
 import { StudentClassProvider } from '../../features/student/StudentClassContext'
 import { PublicScrollManager } from '../navigation/PublicScrollManager'
+import { StudentProgressProvider } from '../../features/progress/StudentProgressContext'
+import { StudentIdentityControl, StudentRegistrationGate } from '../../features/progress/StudentIdentityUI'
 
 export function AppLayout() {
-  return <StudentClassProvider><StudentAppLayout /></StudentClassProvider>
+  return <StudentClassProvider><StudentProgressProvider><StudentAppLayout /></StudentProgressProvider></StudentClassProvider>
 }
 
 function StudentAppLayout() {
@@ -32,17 +34,20 @@ function StudentAppLayout() {
           </NavLink>
           <nav className="hidden items-center gap-1 md:flex" aria-label={copy.primaryAriaLabel}>
             {navItems.map((item) => <NavLink key={item.to} to={item.to} end={item.end} className={navClass}>{item.label}</NavLink>)}
-            {appwriteConfig.features.publicClassNavigation && <StudentClassSelector />}
+            {appwriteConfig.features.publicClassNavigation && !appwriteConfig.features.studentProgress && <StudentClassSelector />}
+            <StudentIdentityControl />
           </nav>
           <button className="grid size-11 place-items-center rounded-full bg-white md:hidden" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="mobile-menu" aria-label={open ? copy.closeMenuLabel : copy.openMenuLabel}>{open ? <X /> : <Menu />}</button>
         </div>
         {open && (
           <nav id="mobile-menu" className="page-shell flex flex-col gap-2 border-t border-forest-900/8 py-4 md:hidden" aria-label={copy.mobileAriaLabel}>
             {navItems.map((item) => <NavLink key={item.to} to={item.to} end={item.end} onClick={() => setOpen(false)} className={navClass}>{item.label}</NavLink>)}
-            {appwriteConfig.features.publicClassNavigation && <StudentClassSelector mobile onSelect={() => setOpen(false)} />}
+            {appwriteConfig.features.publicClassNavigation && !appwriteConfig.features.studentProgress && <StudentClassSelector mobile onSelect={() => setOpen(false)} />}
+            <StudentIdentityControl mobile />
           </nav>
         )}
       </header>
+      <StudentRegistrationGate />
       <main><Outlet /></main>
       <footer className="mt-24 border-t border-forest-900/10 py-10">
         <div className="page-shell flex flex-col justify-between gap-4 text-sm text-muted sm:flex-row"><p><strong className="font-display lowercase text-navy">klik & lær.</strong> · {content.footer.tagline}</p><p>{content.footer.publicNote}</p></div>

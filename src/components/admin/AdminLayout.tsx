@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AlertTriangle, BarChart3, BookOpen, ChevronLeft, FileText, FolderKanban, LogOut, Menu, PlusCircle, Settings, UsersRound, X } from 'lucide-react'
+import { AlertTriangle, BarChart3, BookOpen, ChevronLeft, FileText, FolderKanban, GraduationCap, LogOut, Menu, PlusCircle, Settings, UsersRound, X } from 'lucide-react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../features/auth/AuthContext'
 
@@ -8,6 +8,7 @@ const items = [
   { to: '/admin/exercises', label: 'Øvelser', icon: BookOpen },
   { to: '/admin/categories', label: 'Kategorier', icon: FolderKanban },
   { to: '/admin/classes', label: 'Klasser', icon: UsersRound },
+  { to: '/admin/progress', label: 'Fremskridt', icon: GraduationCap },
   { to: '/admin/content', label: 'Websiteindhold', icon: FileText },
   { to: '/admin/exercises/new', label: 'Upload øvelse', icon: PlusCircle },
   { to: '/admin/settings', label: 'Indstillinger', icon: Settings },

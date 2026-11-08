@@ -8,14 +8,17 @@ import { useContent } from '../features/content/ContentContext'
 import { useStudentClass } from '../features/student/StudentClassContext'
 import { appwriteConfig } from '../lib/appwrite'
 import { getVisibleExerciseIds } from '../features/student/studentClassSelection.mjs'
+import { useStudentProgress } from '../features/progress/StudentProgressContext'
 
 export function CategoryPage() {
   const { slug = '', classId } = useParams()
   const catalog = useCatalog()
   const category = catalog.categories.find((item) => item.slug === slug && item.isPublished)
   const { selectedClass } = useStudentClass()
-  const effectiveClassId = classId || (appwriteConfig.features.publicClassNavigation ? selectedClass?.id : undefined)
+  const progress = useStudentProgress()
+  const effectiveClassId = classId || (progress.enabled ? progress.identity?.classId : appwriteConfig.features.publicClassNavigation ? selectedClass?.id : undefined)
   const schoolClass = effectiveClassId ? catalog.classes.find((item) => item.id === effectiveClassId && item.status === 'active') : undefined
+  const useClassRoutes = Boolean(classId && appwriteConfig.features.publicClassNavigation)
   const { content } = useContent()
   const copy = content.categories
   if (!category || (effectiveClassId && !schoolClass)) return <Navigate to="/404" replace />
@@ -24,11 +27,11 @@ export function CategoryPage() {
   const items = categoryExercises.filter((exercise) => visibleIds.has(exercise.id))
 
   return <div className="page-shell py-10 sm:py-14">
-    <Breadcrumbs items={schoolClass ? [{ label: 'Klasser', to: '/classes' }, { label: schoolClass.name, to: `/classes/${schoolClass.id}` }, { label: category.name }] : [{ label: copy.breadcrumbLabel, to: '/exercises' }, { label: category.name }]} />
+    <Breadcrumbs items={useClassRoutes && schoolClass ? [{ label: 'Klasser', to: '/classes' }, { label: schoolClass.name, to: `/classes/${schoolClass.id}` }, { label: category.name }] : [{ label: copy.breadcrumbLabel, to: '/exercises' }, { label: category.name }]} />
     <section className="mt-8 rounded-[32px] bg-forest-900 p-7 text-white sm:p-10">
       <div><span className="mb-6 grid size-14 place-items-center rounded-2xl bg-white/10 text-lime"><CategoryIcon name={category.icon} /></span><p className="text-xs font-black uppercase tracking-[.16em] text-periwinkle">{category.eyebrow}</p><h1 className="display mt-3 text-4xl font-bold tracking-[-.03em] sm:text-6xl">{category.name}</h1><p className="mt-4 max-w-2xl text-base leading-7 text-white/70">{category.description}</p></div>
     </section>
     <div className="mb-6 mt-12 flex items-end justify-between"><div><h2 className="display text-3xl font-bold text-forest-950">{copy.exercisesHeading}</h2><p className="mt-1 text-sm text-muted">{items.length} {items.length === 1 ? copy.exerciseSingular : copy.exercisePlural} i kategorien</p></div></div>
-    {items.length ? <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{items.map((exercise) => <ExerciseCard key={exercise.id} exercise={exercise} to={schoolClass ? `/classes/${schoolClass.id}/exercises/${exercise.id}` : undefined} />)}</div> : <div className="rounded-[28px] border border-dashed border-forest-900/20 bg-white/55 p-12 text-center"><FolderOpen className="mx-auto size-10 text-forest-700" /><h2 className="display mt-4 text-2xl font-bold">{copy.emptyHeading}</h2><p className="mx-auto mt-2 max-w-md text-muted">{copy.emptyBody}</p></div>}
+    {items.length ? <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{items.map((exercise) => <ExerciseCard key={exercise.id} exercise={exercise} to={useClassRoutes && schoolClass ? `/classes/${schoolClass.id}/exercises/${exercise.id}` : undefined} />)}</div> : <div className="rounded-[28px] border border-dashed border-forest-900/20 bg-white/55 p-12 text-center"><FolderOpen className="mx-auto size-10 text-forest-700" /><h2 className="display mt-4 text-2xl font-bold">{copy.emptyHeading}</h2><p className="mx-auto mt-2 max-w-md text-muted">{copy.emptyBody}</p></div>}
   </div>
 }

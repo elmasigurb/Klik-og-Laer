@@ -39,3 +39,12 @@ test('trusted resize bridge is injected without changing the stored exercise HTM
   assert.doesNotMatch(wrapped, /postMessage\([^;]+,"\*"\)/)
   assert.ok(wrapped.indexOf('data-kl-resize-bridge') < wrapped.indexOf('<html>'))
 })
+
+test('exercise result bridge fails safely when the HTML signature has changed', () => {
+  const original = '<!doctype html><html><body><section id="result" class="hidden"></section></body></html>'
+  const disabled = buildResizableExerciseDocument(original, frameId, 'https://klik.test')
+  const changed = buildResizableExerciseDocument(original, frameId, 'https://klik.test', '212bb7db-22ff-4c40-8b72-4e4663a4c266')
+  assert.doesNotMatch(disabled, /data-kl-result-bridge/)
+  assert.doesNotMatch(changed, /data-kl-result-bridge/)
+  assert.equal(original, '<!doctype html><html><body><section id="result" class="hidden"></section></body></html>')
+})

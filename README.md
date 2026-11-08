@@ -1,6 +1,6 @@
 # Klik & Lær
 
-Klik & Lær is a public Danish exercise library with a separate, teacher-only administration area. Visitors do not create accounts and results are never persisted. The authorized teacher manages categories, HTML exercises, and website copy through Appwrite.
+Klik & Lær is a public Danish exercise library with a separate, teacher-only administration area. The authorized teacher manages categories, HTML exercises, classes, website copy, and student completion records through Appwrite. Student progress is implemented locally but remains disabled by default and is not deployed.
 
 ## Start locally
 
@@ -21,7 +21,7 @@ npm run build
 
 Only published categories, exercise metadata, HTML files, and website copy are public. Uploaded exercises run in a sandboxed iframe without `allow-same-origin`; any score or feedback exists only for the current page session.
 
-There is no student registration, login, profile, dashboard, or progress repository. Older browser records are not read or deleted.
+When `VITE_STUDENT_PROGRESS_ENABLED=true`, a student registers with a name and active class, receives an opaque browser credential, and sees completed exercise indicators. The deployed interface remains unchanged while the flag is false. See [the student-progress implementation guide](docs/student-progress-phase-3a.md) for security limitations and rollout steps.
 
 ## Teacher administration
 
@@ -36,6 +36,7 @@ The dashboard supports:
 - website-copy drafts, preview, publication, history, and restoration.
 - owner-scoped class creation, renaming, ordering, archiving, and restoration;
 - individual and bulk assignment of one stored exercise to multiple classes.
+- client-reported student completion totals, dates, name/class correction, and privacy-preserving deletion under `/admin/progress`.
 
 Public class navigation is guarded by `VITE_PUBLIC_CLASS_NAVIGATION_ENABLED` and is disabled by default. Existing public category/exercise navigation remains active while teachers organize content. Follow [the class rollout guide](docs/class-management-migration.md) before enabling it.
 

@@ -41,11 +41,19 @@ Add these non-secret variables using the existing resource IDs:
 
 Do not manually create `APPWRITE_FUNCTION_API_ENDPOINT`, `APPWRITE_FUNCTION_PROJECT_ID`, or a permanent API key. Appwrite injects the endpoint/project variables and provides a per-execution ephemeral key.
 
-Environment-variable changes take effect only after a new deployment. Add `CLASSES_TABLE_ID` and `EXERCISE_CLASSES_TABLE_ID` before creating the deployment.
+For student progress, preserve every existing variable and add:
+
+| Variable | Value |
+| --- | --- |
+| `STUDENTS_TABLE_ID` | `students` |
+| `EXERCISE_COMPLETIONS_TABLE_ID` | `exercise-completions` |
+| `STUDENT_CREDENTIAL_PEPPER` | the same secret used by `student-progress`, at least 32 random bytes |
+
+Environment-variable changes take effect only after a new deployment. Never expose the pepper through a `VITE_` variable.
 
 ## Prepare and deploy the reviewed source
 
-The reviewed source root contains only `package.json`, `package-lock.json`, `src/main.mjs`, `src/authorization.mjs`, and `src/operations.mjs`. From `appwrite/functions/content-manager`, package it for a manual deployment:
+The reviewed source root also contains `src/progressOperations.mjs`. From `appwrite/functions/content-manager`, package it for a manual deployment:
 
 ```bash
 tar --exclude='node_modules' --exclude='code.tar.gz' -czf code.tar.gz package.json package-lock.json src
@@ -93,6 +101,12 @@ Use unique test names so the records are easy to identify without touching exist
 12. Classes: confirm teachers can mutate only classes they own, archived classes disappear publicly, and restoring a duplicate name fails.
 13. Assignments: bulk-add and bulk-remove assignments, then confirm only active-class/published-exercise relationships are publicly readable.
 
-The supported class-management actions are `class.create`, `class.update`, `class.setStatus`, `class.reorder`, and `exercise.setClasses`. `exercise.setClasses` accepts `add`, `remove`, and single-exercise `replace` modes. The earlier internal name `exercise.assignClasses` remains an alias for compatibility but is not used by the frontend.
+The supported class-management actions are `class.create`, `class.update`, `class.setStatus`, `class.reorder`, and `exercise.setClasses`. Teacher-only progress actions are `progress.listClass`, `student.rename`, `student.moveClass`, `student.setStatus`, `student.rotateCredential`, `student.delete`, `progress.deleteStudent`, and `progress.deleteClass`. Every action repeats Teachers Team and ownership checks.
+
+## Public student-progress Function
+
+Create one additional Function with ID `student-progress`, source root `appwrite/functions/student-progress`, entrypoint `src/main.mjs`, and `npm ci` build command. Public execute access is required for anonymous students, but its ephemeral key scopes must be limited to `rows.read` and `rows.write`. The private tables grant no direct client permissions.
+
+Configure `DATABASE_ID`, `STUDENTS_TABLE_ID=students`, `EXERCISE_COMPLETIONS_TABLE_ID=exercise-completions`, `CLASSES_TABLE_ID=classes`, `EXERCISES_TABLE_ID`, `EXERCISE_CLASSES_TABLE_ID=exercise-classes`, `STUDENT_CREDENTIAL_PEPPER`, and `REGISTRATION_IDEMPOTENCY_WINDOW_SECONDS=600`. The pepper must exactly match `content-manager`.
 
 Re-run `npm run audit:appwrite`, `npm run test:authorization`, `npm run typecheck`, and `npm run build` after deployment.

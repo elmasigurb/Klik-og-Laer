@@ -1,3 +1,5 @@
+import { buildExerciseResultBridge } from './exerciseResultProtocol.mjs'
+
 export const EXERCISE_RESIZE_MESSAGE = 'klik-og-laer:exercise-resize'
 export const EXERCISE_RESIZE_VERSION = 1
 export const MIN_EXERCISE_HEIGHT = 240
@@ -13,9 +15,10 @@ export function isTrustedResizeMessage(event, frameWindow, frameId) {
   return Number.isInteger(message.height) && message.height >= MIN_EXERCISE_HEIGHT && message.height <= MAX_EXERCISE_HEIGHT
 }
 
-export function buildResizableExerciseDocument(html, frameId, parentOrigin) {
+export function buildResizableExerciseDocument(html, frameId, parentOrigin, resultBridgeExerciseId, resultBridgeHtmlSignature) {
   const safeFrameId = JSON.stringify(frameId)
   const safeParentOrigin = JSON.stringify(parentOrigin)
+  const resultBridge = resultBridgeExerciseId && resultBridgeHtmlSignature ? buildExerciseResultBridge(frameId, parentOrigin, resultBridgeExerciseId, resultBridgeHtmlSignature) : ''
   const bridge = `<meta name="viewport" content="width=device-width, initial-scale=1"><style data-kl-touch-bridge>button,input,select,textarea{touch-action:manipulation}input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),select,textarea{font-size:max(16px,1em)!important}</style><script data-kl-resize-bridge>(function(){
     "use strict";
     var bridgeScript=document.currentScript;
@@ -43,7 +46,7 @@ export function buildResizableExerciseDocument(html, frameId, parentOrigin) {
     }
     if(bridgeScript)bridgeScript.remove();
     if(document.readyState==="loading")addEventListener("DOMContentLoaded",start,{once:true});else start();
-  })();<\/script>`
+  })();<\/script>${resultBridge}`
   const doctype = html.match(/^\s*<!doctype[^>]*>/i)
   if (!doctype) return `${bridge}${html}`
   return `${html.slice(0, doctype[0].length)}${bridge}${html.slice(doctype[0].length)}`

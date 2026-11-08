@@ -8,7 +8,7 @@ import { getClassIdFromPath, persistSelectedClassId, readSelectedClassId, resolv
 interface StudentClassValue {
   activeClasses: SchoolClass[]
   selectedClass?: SchoolClass
-  selectClass(classId: string): void
+  selectClass(classId: string, navigateToClass?: boolean): void
 }
 
 const StudentClassContext = createContext<StudentClassValue | null>(null)
@@ -41,16 +41,16 @@ export function StudentClassProvider({ children }: { children: ReactNode }) {
     }
   }, [activeIds, loading, navigate, routeClassId, selectedClassId])
 
-  const selectClass = useCallback((classId: string) => {
+  const selectClass = useCallback((classId: string, navigateToClass = true) => {
     const resolved = resolveSelectedClassId(classId, activeIds)
     setSelectedClassId(resolved)
     persistSelectedClassId(window.localStorage, resolved)
-    navigate(resolved ? `/classes/${encodeURIComponent(resolved)}` : '/exercises')
+    if (navigateToClass) navigate(resolved ? `/classes/${encodeURIComponent(resolved)}` : '/exercises')
   }, [activeIds, navigate])
 
   const value = useMemo<StudentClassValue>(() => ({
     activeClasses,
-    selectedClass: appwriteConfig.features.publicClassNavigation ? activeClasses.find((item) => item.id === selectedClassId) : undefined,
+    selectedClass: appwriteConfig.features.publicClassNavigation || appwriteConfig.features.studentProgress ? activeClasses.find((item) => item.id === selectedClassId) : undefined,
     selectClass,
   }), [activeClasses, selectClass, selectedClassId])
 

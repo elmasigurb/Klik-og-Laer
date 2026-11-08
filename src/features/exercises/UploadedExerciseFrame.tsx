@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { exerciseFileRepository } from './exerciseFileRepository'
 import { appwriteConfig, storage } from '../../lib/appwrite'
 import { buildResizableExerciseDocument, isTrustedResizeMessage, MAX_EXERCISE_HEIGHT } from './iframeResizeProtocol.mjs'
+import { exerciseHtmlSignature, isTrustedExerciseResultMessage, type ExerciseResultMessage } from './exerciseResultProtocol.mjs'
 
 const DEFAULT_FRAME_HEIGHT = 720
 const LARGE_FRAME_HEIGHT = 900
@@ -13,7 +14,17 @@ function createFrameId() {
   return Array.from(bytes, (value) => value.toString(36)).join('-')
 }
 
-export function UploadedExerciseFrame({ exerciseId, fileId, title, html: providedHtml, large = false }: { exerciseId: string; fileId?: string; title: string; html?: string; large?: boolean }) {
+interface UploadedExerciseFrameProps {
+  exerciseId: string
+  fileId?: string
+  title: string
+  html?: string
+  large?: boolean
+  enableResultBridge?: boolean
+  onResult?: (result: ExerciseResultMessage) => void
+}
+
+export function UploadedExerciseFrame({ exerciseId, fileId, title, html: providedHtml, large = false, enableResultBridge = false, onResult }: UploadedExerciseFrameProps) {
   const [source, setSource] = useState<string>()
   const [error, setError] = useState('')
   const [height, setHeight] = useState(large ? LARGE_FRAME_HEIGHT : DEFAULT_FRAME_HEIGHT)
@@ -21,6 +32,8 @@ export function UploadedExerciseFrame({ exerciseId, fileId, title, html: provide
   const [fallback, setFallback] = useState(false)
   const frameRef = useRef<HTMLIFrameElement>(null)
   const frameIdRef = useRef('')
+  const htmlSignatureRef = useRef('')
+  const receivedAttemptsRef = useRef(new Set<string>())
 
   useEffect(() => {
     let url = ''
@@ -36,14 +49,16 @@ export function UploadedExerciseFrame({ exerciseId, fileId, title, html: provide
         html ??= await exerciseFileRepository.get(exerciseId)
         if (!html) throw new Error('HTML-filen blev ikke fundet på denne enhed.')
         frameIdRef.current = createFrameId()
-        const wrappedHtml = buildResizableExerciseDocument(html, frameIdRef.current, window.location.origin)
+        htmlSignatureRef.current = await exerciseHtmlSignature(html)
+        receivedAttemptsRef.current.clear()
+        const wrappedHtml = buildResizableExerciseDocument(html, frameIdRef.current, window.location.origin, enableResultBridge ? exerciseId : undefined, htmlSignatureRef.current)
         url = URL.createObjectURL(new Blob([wrappedHtml], { type: 'text/html' }))
         if (active) setSource(url)
       } catch (reason) { if (active) setError(reason instanceof Error ? reason.message : 'Filen kunne ikke åbnes.') }
     }
     void load()
     return () => { active = false; if (url) URL.revokeObjectURL(url) }
-  }, [exerciseId, fileId, providedHtml])
+  }, [enableResultBridge, exerciseId, fileId, providedHtml])
 
   useEffect(() => {
     setHeight(large ? LARGE_FRAME_HEIGHT : DEFAULT_FRAME_HEIGHT)
@@ -57,15 +72,22 @@ export function UploadedExerciseFrame({ exerciseId, fileId, title, html: provide
       const frameWindow = frameRef.current?.contentWindow ?? null
       // A sandbox without allow-same-origin has the opaque "null" origin, so
       // the exact Window reference and per-render token are both required.
-      if (!isTrustedResizeMessage(event, frameWindow, frameIdRef.current)) return
-      setHeight(event.data.height)
-      setResized(true)
-      setFallback(false)
+      if (isTrustedResizeMessage(event, frameWindow, frameIdRef.current)) {
+        setHeight(event.data.height)
+        setResized(true)
+        setFallback(false)
+        return
+      }
+      if (!enableResultBridge || !isTrustedExerciseResultMessage(event, frameWindow, frameIdRef.current, exerciseId, htmlSignatureRef.current)) return
+      const result = event.data as ExerciseResultMessage
+      if (receivedAttemptsRef.current.has(result.attemptId)) return
+      receivedAttemptsRef.current.add(result.attemptId)
+      onResult?.(result)
     }
     window.addEventListener('message', handleMessage)
     const fallbackTimer = window.setTimeout(() => setFallback((current) => current || !resized), 2500)
     return () => { window.removeEventListener('message', handleMessage); window.clearTimeout(fallbackTimer) }
-  }, [resized, source])
+  }, [enableResultBridge, exerciseId, onResult, resized, source])
 
   if (error) return <div role="alert" className="flex min-h-64 items-center justify-center gap-3 rounded-3xl border border-coral bg-coral/20 p-6 text-sm font-bold text-danger"><AlertTriangle className="size-5" />{error}</div>
   if (!source) return <div className="grid min-h-64 place-items-center rounded-3xl border border-navy/10 bg-white"><LoaderCircle className="size-7 animate-spin text-navy" aria-label="Indlæser forhåndsvisning" /></div>
