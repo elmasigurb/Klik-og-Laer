@@ -1,6 +1,7 @@
 export const STUDENT_IDENTITY_STORAGE_KEY = 'klik-og-laer:student-identity:v1'
 export const STUDENT_REGISTRATION_PENDING_KEY = 'klik-og-laer:student-registration-pending:v1'
 export const STUDENT_COMPLETION_CACHE_KEY = 'klik-og-laer:student-completions:v1'
+export const STUDENT_REGISTRATION_DISMISSED_KEY = 'klik-og-laer:student-registration-dismissed:v1'
 
 const idPattern = /^[A-Za-z0-9][A-Za-z0-9._-]{0,35}$/
 const secretPattern = /^[A-Za-z0-9_-]{43}$/
@@ -36,6 +37,18 @@ export function getOrCreateRegistrationKey(displayName, classId, storage = globa
   const registrationKey = bytesToBase64Url(bytes)
   storage.setItem(STUDENT_REGISTRATION_PENDING_KEY, JSON.stringify({ displayName, classId, registrationKey }))
   return registrationKey
+}
+
+export function hasDismissedStudentRegistration(storage = globalThis.localStorage) {
+  return storage.getItem(STUDENT_REGISTRATION_DISMISSED_KEY) === 'true'
+}
+
+export function dismissStudentRegistration(storage = globalThis.localStorage) {
+  storage.setItem(STUDENT_REGISTRATION_DISMISSED_KEY, 'true')
+}
+
+export function clearStudentRegistrationDismissal(storage = globalThis.localStorage) {
+  storage.removeItem(STUDENT_REGISTRATION_DISMISSED_KEY)
 }
 
 function bytesToBase64Url(bytes) {

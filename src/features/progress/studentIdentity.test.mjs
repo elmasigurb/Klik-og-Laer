@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { clearStudentIdentity, getOrCreateRegistrationKey, loadStudentIdentity, saveStudentIdentity, STUDENT_COMPLETION_CACHE_KEY, STUDENT_IDENTITY_STORAGE_KEY } from './studentIdentity.mjs'
+import { clearStudentIdentity, clearStudentRegistrationDismissal, dismissStudentRegistration, getOrCreateRegistrationKey, hasDismissedStudentRegistration, loadStudentIdentity, saveStudentIdentity, STUDENT_COMPLETION_CACHE_KEY, STUDENT_IDENTITY_STORAGE_KEY } from './studentIdentity.mjs'
 
 function memoryStorage() {
   const values = new Map()
@@ -23,6 +23,16 @@ test('registration retry reuses only its pending high-entropy key', () => {
   assert.equal(first.length, 43)
   assert.equal(getOrCreateRegistrationKey('Anna', 'class-1', storage, cryptoApi), first)
   assert.notEqual(getOrCreateRegistrationKey('Anna', 'class-2', storage, cryptoApi), first)
+})
+
+test('anonymous registration dismissal persists without creating an identity', () => {
+  const storage = memoryStorage()
+  assert.equal(hasDismissedStudentRegistration(storage), false)
+  dismissStudentRegistration(storage)
+  assert.equal(hasDismissedStudentRegistration(storage), true)
+  assert.equal(loadStudentIdentity(storage), null)
+  clearStudentRegistrationDismissal(storage)
+  assert.equal(hasDismissedStudentRegistration(storage), false)
 })
 
 test('switch student clears identity, pending registration, and cached progress only', () => {

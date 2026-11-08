@@ -4,7 +4,7 @@ import type { ExerciseResultMessage } from '../exercises/exerciseResultProtocol.
 import { appwriteConfig } from '../../lib/appwrite'
 import { executeStudentProgress, FunctionExecutionError } from '../../lib/appwriteFunctions'
 import { useStudentClass } from '../student/StudentClassContext'
-import { clearStudentIdentity, getOrCreateRegistrationKey, loadStudentIdentity, saveStudentIdentity, STUDENT_COMPLETION_CACHE_KEY, type StoredStudentIdentity } from './studentIdentity.mjs'
+import { clearStudentIdentity, clearStudentRegistrationDismissal, dismissStudentRegistration, getOrCreateRegistrationKey, hasDismissedStudentRegistration, loadStudentIdentity, saveStudentIdentity, STUDENT_COMPLETION_CACHE_KEY, type StoredStudentIdentity } from './studentIdentity.mjs'
 import { isExerciseCompleted, mergeCompletion } from './progressViewModel.mjs'
 
 export interface StudentCompletion {
@@ -23,7 +23,10 @@ interface StudentProgressValue {
   identity: StoredStudentIdentity | null
   completions: StudentCompletion[]
   error: string
+  registrationPromptOpen: boolean
   register(displayName: string, classId: string): Promise<void>
+  continueWithoutRegistration(): void
+  openRegistration(): void
   switchStudent(): void
   retryValidation(): Promise<void>
   recordResult(result: ExerciseResultMessage): Promise<void>
@@ -47,6 +50,7 @@ export function StudentProgressProvider({ children }: { children: ReactNode }) {
   const [identity, setIdentity] = useState<StoredStudentIdentity | null>(() => enabled ? loadStudentIdentity() : null)
   const [completions, setCompletions] = useState<StudentCompletion[]>([])
   const [error, setError] = useState('')
+  const [registrationPromptOpen, setRegistrationPromptOpen] = useState(() => enabled && !loadStudentIdentity() && !hasDismissedStudentRegistration())
 
   const loadCompletions = useCallback(async (current: StoredStudentIdentity) => {
     const result = await executeStudentProgress<CompletionResponse>({ action: 'student.listCompletions', studentId: current.studentId, credential: current.credential })
@@ -72,6 +76,7 @@ export function StudentProgressProvider({ children }: { children: ReactNode }) {
         clearStudentIdentity()
         setIdentity(null)
         setCompletions([])
+        setRegistrationPromptOpen(!hasDismissedStudentRegistration())
         setStatus('guest')
         return
       }
@@ -100,6 +105,8 @@ export function StudentProgressProvider({ children }: { children: ReactNode }) {
       const next = saveStudentIdentity({ studentId: result.student.id, classId: result.student.classId, displayName: result.student.displayName, credential: result.credential })
       setIdentity(next)
       setCompletions([])
+      clearStudentRegistrationDismissal()
+      setRegistrationPromptOpen(false)
       cacheCompletions(next.studentId, [])
       selectClass(next.classId, false)
       setStatus('ready')
@@ -110,12 +117,27 @@ export function StudentProgressProvider({ children }: { children: ReactNode }) {
     }
   }, [activeClasses, enabled, selectClass])
 
+  const continueWithoutRegistration = useCallback(() => {
+    dismissStudentRegistration()
+    setRegistrationPromptOpen(false)
+    setError('')
+    if (!identity) setStatus(enabled ? 'guest' : 'disabled')
+  }, [enabled, identity])
+
+  const openRegistration = useCallback(() => {
+    clearStudentRegistrationDismissal()
+    setError('')
+    setRegistrationPromptOpen(true)
+  }, [])
+
   const switchStudent = useCallback(() => {
     clearStudentIdentity()
+    clearStudentRegistrationDismissal()
     setIdentity(null)
     setCompletions([])
     setSubmissionStatus('idle')
     setError('')
+    setRegistrationPromptOpen(enabled)
     selectClass('', false)
     setStatus(enabled ? 'guest' : 'disabled')
   }, [enabled, selectClass])
@@ -146,9 +168,10 @@ export function StudentProgressProvider({ children }: { children: ReactNode }) {
   }, [completions, enabled, identity, status])
 
   const value = useMemo<StudentProgressValue>(() => ({
-    enabled, status, submissionStatus, identity, completions, error, register, switchStudent,
+    enabled, status, submissionStatus, identity, completions, error, registrationPromptOpen, register,
+    continueWithoutRegistration, openRegistration, switchStudent,
     retryValidation: validate, recordResult, isCompleted: (exerciseId) => isExerciseCompleted(completions, exerciseId),
-  }), [completions, enabled, error, identity, recordResult, register, status, submissionStatus, switchStudent, validate])
+  }), [completions, continueWithoutRegistration, enabled, error, identity, openRegistration, recordResult, register, registrationPromptOpen, status, submissionStatus, switchStudent, validate])
 
   return <StudentProgressContext.Provider value={value}>{children}</StudentProgressContext.Provider>
 }
