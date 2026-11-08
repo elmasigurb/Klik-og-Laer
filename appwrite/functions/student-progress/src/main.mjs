@@ -14,6 +14,23 @@ function parseBody(req) {
   try { return JSON.parse(raw || '{}') } catch { throw new StudentProgressError(400) }
 }
 
+const safeMessages = {
+  general_unauthorized_scope: 'Appwrite rejected the Function key scope.',
+  general_rate_limit_exceeded: 'Appwrite rate limiting rejected the operation.',
+  general_query_invalid: 'Appwrite rejected a database query.',
+  row_invalid_structure: 'Appwrite rejected the row structure.',
+  document_invalid_structure: 'Appwrite rejected the row structure.',
+  row_already_exists: 'Appwrite reported a conflicting row.',
+  document_already_exists: 'Appwrite reported a conflicting row.',
+}
+
+export function safeErrorMetadata(reason) {
+  const code = Number.isInteger(reason?.code) ? reason.code : null
+  const candidate = typeof reason?.type === 'string' ? reason.type : ''
+  const type = /^[a-z0-9_.-]{1,80}$/.test(candidate) ? candidate : 'unknown'
+  return { code, type, message: safeMessages[type] ?? 'Unexpected Appwrite operation failure.' }
+}
+
 export default async ({ req, res, error }) => {
   if (req.method !== 'POST') return res.json({ ok: false, error: 'Anmodningen kunne ikke gennemføres.' }, 405)
   try {
@@ -44,7 +61,7 @@ export default async ({ req, res, error }) => {
     return res.json({ ok: true, data }, 200)
   } catch (reason) {
     const status = reason instanceof StudentProgressError ? reason.status : 500
-    if (status >= 500) error('Student progress request failed without request payload details.')
+    if (status >= 500) error(JSON.stringify({ event: 'student-progress.failure', ...safeErrorMetadata(reason) }))
     return res.json({ ok: false, error: status === 422 ? reason.message : 'Anmodningen kunne ikke gennemføres.' }, status)
   }
 }

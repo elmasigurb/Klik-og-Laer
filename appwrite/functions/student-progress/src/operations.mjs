@@ -63,7 +63,10 @@ async function register(payload, ctx) {
   if (typeof payload.registrationKey !== 'string' || !registrationPattern.test(payload.registrationKey)) throw new StudentProgressError(400)
   let schoolClass
   try { schoolClass = await ctx.tables.getRow({ databaseId: ctx.ids.database, tableId: ctx.ids.classes, rowId: classId }) }
-  catch { throw new StudentProgressError(400) }
+  catch (reason) {
+    if (reason?.code === 404) throw new StudentProgressError(400)
+    throw reason
+  }
   if (schoolClass.status !== 'active') throw new StudentProgressError(400)
 
   const registrationDigest = ctx.digest(`registration:${payload.registrationKey}`)

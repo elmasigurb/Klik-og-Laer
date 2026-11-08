@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { createHmac } from 'node:crypto'
 import test from 'node:test'
 import { EXERCISE_RESULT_ADAPTERS, EXERCISE_RESULT_MANIFEST_VERSION } from '../src/exerciseResultManifest.mjs'
+import { safeErrorMetadata } from '../src/main.mjs'
 import { runStudentProgressOperation, StudentProgressError } from '../src/operations.mjs'
 import { EXERCISE_RESULT_ADAPTERS as frontendAdapters } from '../../../../src/features/exercises/exerciseResultAdapters.mjs'
 
@@ -9,6 +10,16 @@ const ids = { database: 'db', students: 'students', completions: 'completions', 
 const digest = (value) => createHmac('sha256', 'test-pepper-with-at-least-thirty-two-bytes').update(value).digest('hex')
 const credential = 'C'.repeat(43)
 const registrationKey = 'R'.repeat(43)
+
+test('sanitized Function errors expose only allowlisted metadata', () => {
+  const reason = Object.assign(new Error('Elma credential=secret-token'), { code: 401, type: 'general_unauthorized_scope' })
+  const metadata = safeErrorMetadata(reason)
+  assert.deepEqual(metadata, { code: 401, type: 'general_unauthorized_scope', message: 'Appwrite rejected the Function key scope.' })
+  assert.doesNotMatch(JSON.stringify(metadata), /Elma|secret-token|credential/)
+
+  const unsafeType = safeErrorMetadata(Object.assign(new Error('private details'), { type: 'bad type with personal data' }))
+  assert.deepEqual(unsafeType, { code: null, type: 'unknown', message: 'Unexpected Appwrite operation failure.' })
+})
 
 function createContext(seed = {}) {
   let serial = 0
@@ -119,6 +130,23 @@ test('registration rejects archived classes and expired idempotency keys', async
   const registered = await register(ctx)
   maps.students.get(registered.student.id).$createdAt = '2026-11-05T09:00:00.000Z'
   await assert.rejects(() => register(ctx), (error) => error.status === 409)
+})
+
+test('registration propagates database permission errors to the sanitized server handler', async () => {
+  const { ctx } = createContext()
+  const permissionError = Object.assign(new Error('must never be logged verbatim'), { code: 401, type: 'general_unauthorized_scope' })
+  ctx.tables.getRow = async () => { throw permissionError }
+  await assert.rejects(() => register(ctx), (error) => {
+    assert.equal(error, permissionError)
+    assert.equal(error instanceof StudentProgressError, false)
+    return true
+  })
+  assert.deepEqual(safeErrorMetadata(permissionError), {
+    code: 401,
+    type: 'general_unauthorized_scope',
+    message: 'Appwrite rejected the Function key scope.',
+  })
+  assert.doesNotMatch(JSON.stringify(safeErrorMetadata(permissionError)), /must never be logged verbatim/)
 })
 
 test('all 36 manifest adapters can persist a valid final completion with exact signatures', async () => {
